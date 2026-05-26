@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "電商核心:下單到出貨",
-    "version": "0.4.0",
+    "version": "0.1.0",
     "locale": "zh-Hant",
     "notes": "對應 sources/ecommerce.sql。展示複合鍵、cardinality、FK 行為、dataFlows、designDecisions。"
   },
