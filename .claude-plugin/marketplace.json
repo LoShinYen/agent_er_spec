@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Turn SQL DDL or design Markdown into a long-lived ER bundle (.erd.json) that drives an interactive web page. Preserves design semantics (color layers, data flows, design decisions) that Mermaid can't express.",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "plugins": [
     {
