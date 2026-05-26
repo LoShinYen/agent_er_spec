@@ -1,0 +1,21 @@
+{
+  "name": "agent-er-spec",
+  "owner": {
+    "name": "LoShihYen"
+  },
+  "metadata": {
+    "description": "Turn SQL DDL or design Markdown into a long-lived ER bundle (.erd.json) that drives an interactive web page. Preserves design semantics (color layers, data flows, design decisions) that Mermaid can't express.",
+    "version": "0.4.0"
+  },
+  "plugins": [
+    {
+      "name": "er-bundle",
+      "description": "Generate or update .erd.json bundles that conform to erd-bundle.schema.json. Use when the user wants a long-lived ER design artifact with color-coded layers, multiple diagram views, data-flow narratives, or design-decision logs — not a one-shot Mermaid snippet.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "skills/er-bundle"
+      ]
+    }
+  ]
+}

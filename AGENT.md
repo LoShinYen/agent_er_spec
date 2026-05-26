@@ -17,10 +17,13 @@
 ## 建議工作流程
 
 1. 讀 `erd-bundle.schema.json` 確認必填欄位。
-2. 讀使用者提供的 **SQL DDL** 或 **Markdown 表格**，抽出表名、欄位、PK/FK/UNIQUE。
+2. 讀使用者提供的 **SQL DDL** 或 **Markdown 表格**，抽出表名、欄位、PK/FK/UNIQUE、`NOT NULL`、`DEFAULT`、FK 行為(`ON DELETE` / `ON UPDATE`)、`CHECK`、`INDEX`、複合鍵。
 3. 填寫 `layers`（分區顏色）、`tables[].layer` / `status` / `comment`。
-4. 為每個視角建立 `diagrams[]`：`positions`（表中心座標）、`connections`（`from` → `to`，`label` 多為 FK 欄位名）。
-5. 需要流程卡或決策對照時，再填 `dataFlows`、`designDecisions`（宿主頁需自行渲染這兩段資料）。
+4. 欄位層級填 `nullable` / `default` / `onDelete` / `onUpdate` / `enumValues`;複合 PK/UQ、INDEX、CHECK 放 `tables[*].tableConstraints`。
+5. 為每個視角建立 `diagrams[]`：`positions`（表中心座標）、`connections`（`from` → `to`，`label` 多為 FK 欄位名,建議補 `cardinality`)。FK 可空時用 `0:N` / `0:1`,NOT NULL 時用 `1:N` / `1:1`。
+6. 需要流程卡或決策對照時，再填 `dataFlows`、`designDecisions`（宿主頁需自行渲染這兩段資料）。
+
+完整範例見 `examples/ecommerce.erd.json`(對應 `sources/ecommerce.sql`)。
 
 ## JSON → 宿主常數對照
 

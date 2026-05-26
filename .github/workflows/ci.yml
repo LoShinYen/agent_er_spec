@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install jsonschema
+
+      - name: Validate bundled examples
+        run: |
+          python3 skills/er-bundle/scripts/validate.py \
+            examples/minimal.erd.json \
+            examples/ecommerce.erd.json \
+            examples/team.erd.json \
+            skills/er-bundle/examples/minimal.erd.json \
+            skills/er-bundle/examples/ecommerce.erd.json \
+            skills/er-bundle/examples/team.erd.json
+
+      - name: Run tests
+        run: python3 -m unittest discover -s skills/er-bundle/tests -v
+
+      - name: Verify root schema matches skill copy
+        run: diff erd-bundle.schema.json skills/er-bundle/references/schema.json

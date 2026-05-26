@@ -1,0 +1,9 @@
+# Per-user Claude Code state (settings, project-skill symlinks for local testing)
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
