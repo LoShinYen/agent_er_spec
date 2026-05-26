@@ -44,7 +44,7 @@ Read the root files directly and produce bundles by hand or via an agent:
 skills/er-bundle/
 ├── SKILL.md                  # trigger description + workflow + anti-patterns
 ├── references/
-│   ├── schema.json           # symlink → root erd-bundle.schema.json (no drift)
+│   ├── schema.json           # copy of root erd-bundle.schema.json (CI diffs to catch drift)
 │   └── layout-heuristics.md  # rules for picking table coordinates
 ├── examples/                 # minimal, ecommerce, team (JSON + SQL), demo.html
 ├── scripts/

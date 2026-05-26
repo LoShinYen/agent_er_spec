@@ -5,7 +5,7 @@
 ## 在這個 repo 該怎麼做事
 
 - **要把 SQL/MD 轉成 bundle** → 走 [skills/er-bundle/SKILL.md](skills/er-bundle/SKILL.md) 的工作流。SKILL.md 是產出步驟、cardinality 規則、反例的權威來源。
-- **要看規格** → [erd-bundle.schema.json](erd-bundle.schema.json) 是權威 schema。`skills/er-bundle/references/schema.json` 是同檔的 symlink,無漂移。
+- **要看規格** → [erd-bundle.schema.json](erd-bundle.schema.json) 是權威 schema。`skills/er-bundle/references/schema.json` 是同檔的副本(CI 會 diff 防漂移)。
 - **要把 bundle 渲染成可開的 HTML** → `python3 skills/er-bundle/scripts/render_html.py <bundle.json> -o out.html`。
 - **要驗證 bundle** → `python3 skills/er-bundle/scripts/validate.py <bundle.json>`(schema + cross-check)。
 
@@ -17,7 +17,7 @@
 - `tables[*].layer` 必須是 `layers` 的其中一個 key。
 - `connections[*].from` / `to` 必須出現在該 diagram 的 `positions` 裡。
 - 任何 schema 變更要保持 backward compatible(新欄位都是 `optional`),否則既有 bundle 會破。
-- 改 `erd-bundle.schema.json` 不必同步副本 — `skills/er-bundle/references/schema.json` 是 symlink。
+- 改 `erd-bundle.schema.json` 後,必須同步 `skills/er-bundle/references/schema.json`(`cp` 即可);CI 有 diff 步驟會擋。
 
 ## Bundle → 宿主 JS 常數對照
 

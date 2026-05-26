@@ -1,15 +1,6 @@
 ---
 name: er-bundle
-description: |
-  Use this skill when the user wants to turn SQL DDL or design Markdown into a
-  long-lived "ER design bundle" (.erd.json) that drives an interactive web page —
-  not a one-shot Mermaid snippet. Trigger when: the request mentions an ER /
-  entity-relationship diagram together with color-coded layers / sub-domains,
-  multiple diagram views of the same schema, a write-flow / data-flow narrative,
-  or a "old vs new" design decision log. Also trigger when the user asks to
-  update an existing `.erd.json` or anything matching
-  references/schema.json (erd-bundle.schema.json). Do NOT trigger for pure
-  "draw a quick ER diagram" requests — Mermaid `erDiagram` is faster for that.
+description: "Use this skill when the user wants to turn SQL DDL or design Markdown into a long-lived ER design bundle (.erd.json) that drives an interactive web page — not a one-shot Mermaid snippet. Trigger when the request mentions an ER / entity-relationship diagram together with color-coded layers / sub-domains, multiple diagram views of the same schema, a write-flow / data-flow narrative, or an old-vs-new design decision log. Also trigger when the user asks to update an existing .erd.json or anything matching erd-bundle.schema.json. Do NOT trigger for pure 'draw a quick ER diagram' requests — Mermaid erDiagram is faster for that."
 ---
 
 # er-bundle — ER 設計 bundle 產生流程
