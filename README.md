@@ -28,6 +28,8 @@ Read the root files directly and produce bundles by hand or via an agent:
 
 [`plugins/er-bundle/skills/er-bundle/`](plugins/er-bundle/skills/er-bundle/) is a self-contained Skill: trigger description, schema, examples, validate + render scripts. Claude Code fires it when a user wants to produce or update an `.erd.json`.
 
+**By default the skill produces both the `.erd.json` and an interactive HTML preview** (opens automatically). Tell it "JSON only" if you want to skip the preview. The [Quick start](#quick-start) CLI commands below are only needed when working with bundles outside Claude Code, or re-rendering after a manual edit.
+
 **Install (pick one):**
 
 - **Plugin marketplace** — add `.claude-plugin/marketplace.json` to your Claude Code plugin marketplace.

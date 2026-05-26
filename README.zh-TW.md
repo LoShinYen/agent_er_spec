@@ -28,6 +28,8 @@
 
 [plugins/er-bundle/skills/er-bundle/](plugins/er-bundle/skills/er-bundle/) 是一份自包含的 Skill,描述、schema、範例、驗證腳本、渲染腳本一應俱全。Claude Code 會在使用者要產或更新 `.erd.json` 時自動觸發。
 
+**Skill 觸發後預設會同時產出 `.erd.json` 與可互動 HTML 預覽**(自動開啟)。只想要 JSON 的話跟它說「只要 JSON」即可。下方 [工作流](#工作流) 的 CLI 指令是給「在 Claude Code 之外操作 bundle」或「手動編輯後重新渲染」用的。
+
 安裝(三選一):
 
 - **Plugin marketplace**:把 `.claude-plugin/marketplace.json` 加入 Claude Code 的 plugin marketplace。
