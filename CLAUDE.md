@@ -19,6 +19,31 @@
 - 任何 schema 變更要保持 backward compatible(新欄位都是 `optional`),否則既有 bundle 會破。
 - 改 `erd-bundle.schema.json` 後,必須同步 `plugins/er-bundle/skills/er-bundle/references/schema.json`(`cp` 即可);CI 有 diff 步驟會擋。
 
+## 改動時的同步清單
+
+過去多次發生「改了行為但文件留在舊狀態」、「commit 前漏 stage 檔案」、「改名沒掃乾淨引用」。任何 PR / commit 前,**對著下面這份清單跑一遍**:
+
+**改 SKILL.md 的觸發描述或工作流** →
+- [ ] `README.md` 與 `README.zh-TW.md` 的 Skill 段落是否仍正確描述行為?
+- [ ] 例:把 HTML 從「選用」改為「預設產出」時,兩份 README 都要同步。
+
+**改 `erd-bundle.schema.json`** →
+- [ ] `cp` 到 `plugins/er-bundle/skills/er-bundle/references/schema.json`(CI 會擋,但本機可先驗)
+- [ ] 是否需要新範例展示新欄位?(像 `0:N` 對應 `examples/team.erd.json`)
+- [ ] `README.md` / `README.zh-TW.md` 的「規格重點」段落?
+
+**改名 / 移動檔案** →
+- [ ] `grep -rn '<舊名>' --include='*.md' --include='*.yml' --include='*.json' .` 把所有引用掃出來修
+- [ ] 包含 CI workflow paths、scripts 內部相對路徑
+
+**改 `.claude-plugin/marketplace.json` 或 `plugin.json`** →
+- [ ] 對齊 `claude-plugins-official` 的格式約定(`source` 用 `./plugins/<name>` 字串 或 git-subdir 物件)
+- [ ] Plugin install 失敗時去翻 `~/Library/Logs/Claude/main.log`,不要憑空猜
+
+**Commit 前固定動作** →
+- [ ] `git status` 確認所有相關檔案都已 stage(不是只看「我有改」就以為進去了)
+- [ ] 跑 `python3 -m unittest discover -s plugins/er-bundle/skills/er-bundle/tests` 過再 commit
+
 ## Bundle → 宿主 JS 常數對照
 
 當把 bundle 灌進新的宿主頁(非 demo.html)時,以下是常見的命名對應:
