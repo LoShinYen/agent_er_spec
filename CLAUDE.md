@@ -4,10 +4,10 @@
 
 ## 在這個 repo 該怎麼做事
 
-- **要把 SQL/MD 轉成 bundle** → 走 [skills/er-bundle/SKILL.md](skills/er-bundle/SKILL.md) 的工作流。SKILL.md 是產出步驟、cardinality 規則、反例的權威來源。
-- **要看規格** → [erd-bundle.schema.json](erd-bundle.schema.json) 是權威 schema。`skills/er-bundle/references/schema.json` 是同檔的副本(CI 會 diff 防漂移)。
-- **要把 bundle 渲染成可開的 HTML** → `python3 skills/er-bundle/scripts/render_html.py <bundle.json> -o out.html`。
-- **要驗證 bundle** → `python3 skills/er-bundle/scripts/validate.py <bundle.json>`(schema + cross-check)。
+- **要把 SQL/MD 轉成 bundle** → 走 [plugins/er-bundle/skills/er-bundle/SKILL.md](plugins/er-bundle/skills/er-bundle/SKILL.md) 的工作流。SKILL.md 是產出步驟、cardinality 規則、反例的權威來源。
+- **要看規格** → [erd-bundle.schema.json](erd-bundle.schema.json) 是權威 schema。`plugins/er-bundle/skills/er-bundle/references/schema.json` 是同檔的副本(CI 會 diff 防漂移)。
+- **要把 bundle 渲染成可開的 HTML** → `python3 plugins/er-bundle/skills/er-bundle/scripts/render_html.py <bundle.json> -o out.html`。
+- **要驗證 bundle** → `python3 plugins/er-bundle/skills/er-bundle/scripts/validate.py <bundle.json>`(schema + cross-check)。
 
 ## 改規格的硬性限制
 
@@ -17,7 +17,7 @@
 - `tables[*].layer` 必須是 `layers` 的其中一個 key。
 - `connections[*].from` / `to` 必須出現在該 diagram 的 `positions` 裡。
 - 任何 schema 變更要保持 backward compatible(新欄位都是 `optional`),否則既有 bundle 會破。
-- 改 `erd-bundle.schema.json` 後,必須同步 `skills/er-bundle/references/schema.json`(`cp` 即可);CI 有 diff 步驟會擋。
+- 改 `erd-bundle.schema.json` 後,必須同步 `plugins/er-bundle/skills/er-bundle/references/schema.json`(`cp` 即可);CI 有 diff 步驟會擋。
 
 ## Bundle → 宿主 JS 常數對照
 
@@ -39,7 +39,7 @@
 ## 測試
 
 ```bash
-python3 -m unittest discover -s skills/er-bundle/tests
+python3 -m unittest discover -s plugins/er-bundle/skills/er-bundle/tests
 ```
 
 CI 在 push / PR 自動跑(`.github/workflows/ci.yml`)。
@@ -47,5 +47,5 @@ CI 在 push / PR 自動跑(`.github/workflows/ci.yml`)。
 ## 不要做的事
 
 - 不要在 `CLAUDE.md` 或 `SKILL.md` 裡 duplicate 對方的內容 — 一個是 repo 概覽,一個是產出工作流。
-- 不要直接修改 `.claude/skills/er-bundle/` — 那是 symlink,改 `skills/er-bundle/` 就好。
+- 不要直接修改 `.claude/skills/er-bundle/` — 那是 symlink,改 `plugins/er-bundle/skills/er-bundle/` 就好。
 - 不要把測試用的暫時 bundle(如 `/tmp/test_*.erd.json`)commit 進 repo。

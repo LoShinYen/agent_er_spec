@@ -26,22 +26,22 @@ Read the root files directly and produce bundles by hand or via an agent:
 
 ### B. As a Claude Code Skill (recommended)
 
-[`skills/er-bundle/`](skills/er-bundle/) is a self-contained Skill: trigger description, schema, examples, validate + render scripts. Claude Code fires it when a user wants to produce or update an `.erd.json`.
+[`plugins/er-bundle/skills/er-bundle/`](plugins/er-bundle/skills/er-bundle/) is a self-contained Skill: trigger description, schema, examples, validate + render scripts. Claude Code fires it when a user wants to produce or update an `.erd.json`.
 
 **Install (pick one):**
 
 - **Plugin marketplace** — add `.claude-plugin/marketplace.json` to your Claude Code plugin marketplace.
-- **User-wide** — copy `skills/er-bundle/` to `~/.claude/skills/`. Fires in any project.
+- **User-wide** — copy `plugins/er-bundle/skills/er-bundle/` to `~/.claude/skills/`. Fires in any project.
 - **Project-local** (best while hacking on the Skill itself):
   ```bash
-  mkdir -p .claude/skills && ln -sfn ../../skills/er-bundle .claude/skills/er-bundle
+  mkdir -p .claude/skills && ln -sfn ../../plugins/er-bundle/skills/er-bundle .claude/skills/er-bundle
   ```
-  `.claude/` is gitignored, so the symlink stays local; edits in `skills/er-bundle/` reflect instantly.
+  `.claude/` is gitignored, so the symlink stays local; edits in `plugins/er-bundle/skills/er-bundle/` reflect instantly.
 
 **Skill layout:**
 
 ```
-skills/er-bundle/
+plugins/er-bundle/skills/er-bundle/
 ├── SKILL.md                  # trigger description + workflow + anti-patterns
 ├── references/
 │   ├── schema.json           # copy of root erd-bundle.schema.json (CI diffs to catch drift)
@@ -66,10 +66,10 @@ A bundle requires `meta` / `layers` / `tables` / `diagrams`. Full surface in the
 
 ```bash
 # Validate (schema + cross-checks: FK endpoints, layer refs, positions coverage)
-python3 skills/er-bundle/scripts/validate.py examples/ecommerce.erd.json
+python3 plugins/er-bundle/skills/er-bundle/scripts/validate.py examples/ecommerce.erd.json
 
 # Render to an interactive HTML page
-python3 skills/er-bundle/scripts/render_html.py examples/ecommerce.erd.json -o /tmp/out.html
+python3 plugins/er-bundle/skills/er-bundle/scripts/render_html.py examples/ecommerce.erd.json -o /tmp/out.html
 open /tmp/out.html
 ```
 
@@ -78,7 +78,7 @@ Both scripts need `jsonschema`: `pip install --user jsonschema`.
 ## Tests
 
 ```bash
-python3 -m unittest discover -s skills/er-bundle/tests
+python3 -m unittest discover -s plugins/er-bundle/skills/er-bundle/tests
 ```
 
 CI runs on every push / PR (Python 3.11 + 3.12) — see [.github/workflows/ci.yml](.github/workflows/ci.yml).

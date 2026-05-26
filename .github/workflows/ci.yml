@@ -26,16 +26,16 @@ jobs:
 
       - name: Validate bundled examples
         run: |
-          python3 skills/er-bundle/scripts/validate.py \
+          python3 plugins/er-bundle/skills/er-bundle/scripts/validate.py \
             examples/minimal.erd.json \
             examples/ecommerce.erd.json \
             examples/team.erd.json \
-            skills/er-bundle/examples/minimal.erd.json \
-            skills/er-bundle/examples/ecommerce.erd.json \
-            skills/er-bundle/examples/team.erd.json
+            plugins/er-bundle/skills/er-bundle/examples/minimal.erd.json \
+            plugins/er-bundle/skills/er-bundle/examples/ecommerce.erd.json \
+            plugins/er-bundle/skills/er-bundle/examples/team.erd.json
 
       - name: Run tests
-        run: python3 -m unittest discover -s skills/er-bundle/tests -v
+        run: python3 -m unittest discover -s plugins/er-bundle/skills/er-bundle/tests -v
 
       - name: Verify schema copy matches root
-        run: diff erd-bundle.schema.json skills/er-bundle/references/schema.json
+        run: diff erd-bundle.schema.json plugins/er-bundle/skills/er-bundle/references/schema.json

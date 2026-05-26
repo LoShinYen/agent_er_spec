@@ -26,20 +26,20 @@
 
 ### B. 當作 Claude Code Skill(推薦)
 
-[skills/er-bundle/](skills/er-bundle/) 是一份自包含的 Skill,描述、schema、範例、驗證腳本、渲染腳本一應俱全。Claude Code 會在使用者要產或更新 `.erd.json` 時自動觸發。
+[plugins/er-bundle/skills/er-bundle/](plugins/er-bundle/skills/er-bundle/) 是一份自包含的 Skill,描述、schema、範例、驗證腳本、渲染腳本一應俱全。Claude Code 會在使用者要產或更新 `.erd.json` 時自動觸發。
 
 安裝(三選一):
 
 - **Plugin marketplace**:把 `.claude-plugin/marketplace.json` 加入 Claude Code 的 plugin marketplace。
-- **User-wide**:複製 `skills/er-bundle/` 到 `~/.claude/skills/`,任何專案都能觸發。
+- **User-wide**:複製 `plugins/er-bundle/skills/er-bundle/` 到 `~/.claude/skills/`,任何專案都能觸發。
 - **Project-local**(開發 skill 本身時最方便):在 repo 根目錄跑
   ```bash
-  mkdir -p .claude/skills && ln -sfn ../../skills/er-bundle .claude/skills/er-bundle
+  mkdir -p .claude/skills && ln -sfn ../../plugins/er-bundle/skills/er-bundle .claude/skills/er-bundle
   ```
-  `.claude/` 已在 `.gitignore` 內,symlink 不會被 commit;改 `skills/er-bundle/` 內容即時反映。
+  `.claude/` 已在 `.gitignore` 內,symlink 不會被 commit;改 `plugins/er-bundle/skills/er-bundle/` 內容即時反映。
 
 ```
-skills/er-bundle/
+plugins/er-bundle/skills/er-bundle/
 ├── SKILL.md                  # 觸發描述 + 工作流 + 反例
 ├── references/
 │   ├── schema.json
@@ -63,10 +63,10 @@ bundle 必填 `meta` / `layers` / `tables` / `diagrams`。完整欄位見 [schem
 
 ```bash
 # 1. 驗證(schema + cross-check FK 端點、layer 參照、positions 完整性)
-python3 skills/er-bundle/scripts/validate.py examples/ecommerce.erd.json
+python3 plugins/er-bundle/skills/er-bundle/scripts/validate.py examples/ecommerce.erd.json
 
 # 2. 渲染成可開的 HTML
-python3 skills/er-bundle/scripts/render_html.py examples/ecommerce.erd.json -o /tmp/out.html
+python3 plugins/er-bundle/skills/er-bundle/scripts/render_html.py examples/ecommerce.erd.json -o /tmp/out.html
 open /tmp/out.html
 ```
 
