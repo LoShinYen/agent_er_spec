@@ -13,7 +13,7 @@
 | 路徑 | 用途 |
 |------|------|
 | [erd-bundle.schema.json](erd-bundle.schema.json) | **JSON Schema**:bundle 的權威結構定義 |
-| [AGENT.md](AGENT.md) | 給 agent 的解析流程(SQL → bundle → 宿主常數) |
+| [CLAUDE.md](CLAUDE.md) | 給任何 Claude Code session 自動載入的 repo 指引(指向 SKILL.md 與 schema) |
 | [examples/minimal.erd.json](examples/minimal.erd.json) | 最小範例:兩表一線 |
 | [examples/ecommerce.erd.json](examples/ecommerce.erd.json) | 完整範例:7 表、2 視角、含 `dataFlows` + `designDecisions` |
 | [examples/team.erd.json](examples/team.erd.json) | 可選關聯範例:`0:1` / `0:N` cardinality |

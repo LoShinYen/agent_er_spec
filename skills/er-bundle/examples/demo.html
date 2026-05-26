@@ -365,7 +365,7 @@ function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }
     const fromLayer = TABLES[c.from]?.layer || Object.keys(LAYERS)[0];
     const color = c.isNew ? ls(fromLayer).color : 'rgba(255,255,255,.82)';
     const d = connPath(sx + padX, sy + padY, ex + padX, ey + padY);
-    return { ...c, d, color, i, fromLayer, strokeW: c.isNew ? 1.5 : 1, opacity: c.isNew ? 0.75 : 0.52, dash: c.dashed ? '5,4' : c.isNew ? 'none' : '4,3' };
+    return { ...c, d, color, i, fromLayer, strokeW: c.isNew ? 1.5 : 1, opacity: c.isNew ? 0.85 : 0.72, dash: c.dashed ? '5,4' : 'none' };
   }).filter(Boolean);
 
   const COLS = { blue:'#60a5fa', amber:'#fbbf24', orange:'#fb923c', pink:'#f472b6', green:'#34d399', purple:'#a78bfa', gray:'rgba(139,148,158,.85)', existing:'rgba(255,255,255,.9)' };

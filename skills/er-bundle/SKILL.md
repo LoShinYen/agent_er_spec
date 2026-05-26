@@ -49,6 +49,8 @@ description: |
    - FK 欄位 **NULL 允許** → `"0:N"`(或 `"0:1"`),代表「可選的上游」
    - 多對多中介表 → 中介表分別跟兩端各畫 `"1:N"` 即可
    - 範例見 [examples/team.erd.json](examples/team.erd.json):users / teams 互相可選引用,自然展示 `0:1` 與 `0:N`
+   - **`dashed: true`** 只用於「邏輯關聯,非實體 FK」(例如反向自參考、跨服務邏輯引用、暫未實作但語意存在的關係)。一般 FK **不要** 設 dashed,渲染預設就是實線。
+   - **`isNew: true`** 只用於「diff view」(這份 bundle 對比 v 舊版,標出新增的關係)。一般首次產出 **不要** 對所有連線設 isNew,會失去突顯效果。
 5. **座標**:見 `references/layout-heuristics.md`。
 6. **(選用)** 寫 `dataFlows`(寫入路徑、actor → action)與 `designDecisions`(old vs v3)。範例見 `examples/ecommerce.erd.json`。
 7. **驗證**:`python3 scripts/validate.py <你的-bundle>.json`。**必跑**,沒過不交件。
@@ -60,6 +62,7 @@ description: |
 - ❌ `tables[*].layer` 指到不存在的 layer key → schema 不會擋,宿主頁找不到顏色就崩。
 - ❌ 複合 PK 把每一欄都標 `tag: "PK"` → 語意錯。複合鍵**只能**放 `tableConstraints`。
 - ❌ `default: 'active'`(JS 字面意義)寫成 `default: active` → JSON 不合法或語意錯。`default` 是字串,原樣保留 SQL 字面(含引號或函式名)。
+- ❌ 把每條連線都設 `dashed: true` 或 `isNew: true` → 失去語意。dashed = 邏輯關聯;isNew = diff view 才用。一般 FK 兩者皆不設。
 
 ## 參考檔案
 

@@ -36,5 +36,7 @@ jobs:
       - name: Run tests
         run: python3 -m unittest discover -s skills/er-bundle/tests -v
 
-      - name: Verify root schema matches skill copy
-        run: diff erd-bundle.schema.json skills/er-bundle/references/schema.json
+      - name: Verify schema symlink is intact
+        run: |
+          test -L skills/er-bundle/references/schema.json
+          test "$(readlink skills/er-bundle/references/schema.json)" = "../../../erd-bundle.schema.json"
