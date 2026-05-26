@@ -39,6 +39,8 @@
 **改 `.claude-plugin/marketplace.json` 或 `plugin.json`** →
 - [ ] 對齊 `claude-plugins-official` 的格式約定(`source` 用 `./plugins/<name>` 字串 或 git-subdir 物件)
 - [ ] Plugin install 失敗時去翻 `~/Library/Logs/Claude/main.log`,不要憑空猜
+- [ ] 改了 `version` 後通知測試者:**移除整個 marketplace → 重新 Add**,不是「uninstall + reinstall plugin」。Claude Code 對 custom marketplace **不會自動 `git pull`**,reinstall 只是讀已有 cache。手動觸發 fetch 的方法:刪掉 marketplace 重 Add,或在 `~/.claude/plugins/marketplaces/<name>/` 內 `git fetch && git reset --hard origin/main`。
+- [ ] Install cache 路徑是 `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`,以 version 為 key。Bump version 才會建立新 cache;不 bump 改 SKILL.md / scripts 不會被 reinstall 看到。
 
 **Commit 前固定動作** →
 - [ ] `git status` 確認所有相關檔案都已 stage(不是只看「我有改」就以為進去了)
