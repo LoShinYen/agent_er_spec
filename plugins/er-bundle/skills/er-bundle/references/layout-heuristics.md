@@ -1,42 +1,42 @@
-# 座標決定法則(layout heuristics)
+# Layout heuristics
 
-宿主頁的卡片是 `CARD_W = 214`、`CARD_H_APPROX = 172`(像素)。`positions[table] = { cx, cy }` 是**卡片中心**座標。
+The host page renders cards at `CARD_W = 214` and `CARD_H_APPROX = 172` pixels. `positions[table] = { cx, cy }` is the **center** of the card.
 
-## 預設網格
+## Default grid
 
-- 水平間距:**`CARD_W × 1.4 ≈ 300`**
-- 垂直間距:**`CARD_H_APPROX × 1.6 ≈ 280`**
-- 上邊距 / 左邊距:約 `120 ~ 140`
+- Horizontal spacing: **`CARD_W × 1.4 ≈ 300`**
+- Vertical spacing: **`CARD_H_APPROX × 1.6 ≈ 280`**
+- Top / left margin: roughly `120` to `140`
 
-## 依 FK 依賴分層
+## Layer by FK dependency
 
-把表依「被依賴的方向」由左至右排:
+Arrange tables left-to-right by "what depends on what":
 
-1. **無 FK 的根表**(`accounts`、`products`)→ 最左欄
-2. **只被引用、不引用別人的中介表**(`carts`)→ 中欄
-3. **同時引用多個的整合表**(`orders`)→ 右欄
-4. **明細表 / 1:N 子表**(`*_items`)→ 通常放在父表正下方,vy = 父表 + `280`
+1. **Root tables** with no FKs (`accounts`, `products`) → leftmost column
+2. **Tables that are referenced but reference nothing else** (`carts`) → middle column
+3. **Aggregator tables that reference multiple others** (`orders`) → right column
+4. **Detail / 1:N child tables** (`*_items`) → directly below the parent, `cy = parent_cy + 280`
 
-## canvas 大小
+## Canvas size
 
-- `canvas.w` ≈ `(最大 x 座標) + CARD_W/2 + 120`
-- `canvas.h` ≈ `(最大 y 座標) + CARD_H_APPROX/2 + 120`
-- 留邊是給連線繞行用,**不要**算到剛好。
+- `canvas.w` ≈ `(max x) + CARD_W/2 + 120`
+- `canvas.h` ≈ `(max y) + CARD_H_APPROX/2 + 120`
+- The margin gives connections room to route around cards — **do not** size to the exact bounding box.
 
-## 多視角(`diagrams[]`)
+## Multiple views (`diagrams[]`)
 
-- **全圖**:所有表,canvas 約 `1100 × 560`(7~10 表)。
-- **子網域圖**:同一 schema 只取相關 4~6 張,canvas 縮小到 `800 × 400`。
-- **流程圖**(選用):只放跟某條 `dataFlows` 相關的表,並用 `dashed: true` 標非實體 FK 的邏輯關聯。
+- **Full view**: all tables, canvas around `1100 × 560` for 7–10 tables.
+- **Sub-domain view**: only 4–6 related tables, shrink canvas to ~`800 × 400`.
+- **Flow view** (optional): only tables touched by a specific `dataFlow`; use `dashed: true` for logical (non-physical-FK) relations.
 
-## 連線交叉降到最低
+## Minimize line crossings
 
-- 把**互相關聯多次**的表放近一些(例如 `orders` ↔ `order_items` ↔ `products` 形成一個三角)。
-- 避免「跨越整個畫布」的長連線 — 若無法避免,把該表複製到另一張 `diagram` 即可,不用硬塞同一張。
-- N:N 中介表通常放在兩個被中介表的**正中央或正下方**。
+- Put **frequently-related** tables close together (e.g. `orders` ↔ `order_items` ↔ `products` form a triangle).
+- Avoid connections that span the entire canvas. If unavoidable, **duplicate that table in another `diagram`** rather than forcing it onto one view.
+- N:N junction tables usually sit **centered between** the two sides they bridge, or directly below.
 
-## 反例
+## Anti-patterns
 
-- ❌ 全部表擠成一行 → 連線必交叉。
-- ❌ `cx`、`cy` 用「整百數但畫布只有 600 寬」的座標,卡片會被切到畫布外。
-- ❌ 不同 diagram 的座標互相抄 → 座標是 per-diagram 的,子網域圖通常需要重新排。
+- ❌ Cramming every table into a single row → connections will inevitably cross.
+- ❌ Round-number coordinates that don't fit the canvas (e.g. `cx: 900` on a 600-wide canvas) → cards get clipped off-canvas.
+- ❌ Copying coordinates between diagrams → positions are per-diagram. A sub-domain view almost always needs a fresh layout.
