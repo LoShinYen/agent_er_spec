@@ -30,6 +30,13 @@
 
 **Skill 觸發後預設會同時產出 `.erd.json` 與可互動 HTML 預覽**(自動開啟)。只想要 JSON 的話跟它說「只要 JSON」即可。下方 [工作流](#工作流) 的 CLI 指令是給「在 Claude Code 之外操作 bundle」或「手動編輯後重新渲染」用的。
 
+**互動頁 UX**:
+
+- 箭頭 tip 指向 PK / 被參照端(dbdiagram / UML 慣例),讀法:「從箭頭尾到 tip = 這欄參照那欄」。
+- 自參考畫成卡片右側同邊弧線。
+- 多條 FK 落在同一邊時,箭頭會自動上下/左右分散,不疊在一起。
+- 拖曳過的位置存進 `localStorage`,以 bundle 為單位隔離(不會跨 bundle 互相覆寫),30 天自動過期。**↺ 重設版面** 還原當前 diagram、**🗑 清全部** 一鍵清掉所有 bundle 的座標記憶。
+
 安裝(三選一):
 
 - **Plugin marketplace**:把 `.claude-plugin/marketplace.json` 加入 Claude Code 的 plugin marketplace。

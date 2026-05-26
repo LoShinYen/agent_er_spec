@@ -34,6 +34,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 .tc.is-dragging-card{box-shadow:0 0 0 2px var(--blue),0 12px 32px rgba(0,0,0,.7);z-index:20;transition:none!important;}
 .erd-reset-btn{position:fixed;top:72px;right:16px;z-index:25;background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:5px 11px;border-radius:5px;cursor:pointer;font-family:var(--mono);}
 .erd-reset-btn:hover{background:var(--surface3);color:var(--text);}
+.erd-clear-btn{position:fixed;top:104px;right:16px;z-index:25;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);font-size:10.5px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:var(--mono);}
+.erd-clear-btn:hover{background:var(--surface3);color:#f87171;border-color:rgba(248,113,113,.4);}
 .erd-zoom-host{position:relative;transform-origin:0 0;cursor:grab;}
 .erd-zoom-inner{position:relative;transform-origin:0 0;}
 .erd-wrap.is-panning{cursor:grabbing!important;user-select:none;}
@@ -135,6 +137,57 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 const { useState, useCallback, useRef, useEffect } = React;
 
 const BUNDLE = JSON.parse(document.getElementById('er-bundle-json').textContent);
+
+// ---------- Scoped, TTL'd localStorage helpers ----------
+// Storage key format: erd-pos:<bundle-title>:<diagId> or erd-zoom:<bundle-title>:<diagId>
+// Value format: {"v": <value>, "ts": <epoch_ms>}. Entries expire after 30 days.
+const ERD_STORAGE_TTL_MS = 30 * 24 * 60 * 60 * 1000;  // 30 days
+function erdStorageRead(key) {
+  try {
+    const s = localStorage.getItem(key);
+    if (!s) return null;
+    const parsed = JSON.parse(s);
+    if (!parsed || typeof parsed !== 'object' || !('ts' in parsed)) return null;
+    if (Date.now() - parsed.ts > ERD_STORAGE_TTL_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed.v;
+  } catch (e) { return null; }
+}
+function erdStorageWrite(key, value) {
+  try { localStorage.setItem(key, JSON.stringify({ v: value, ts: Date.now() })); } catch (e) {}
+}
+// Sweep on page load: delete expired entries, and any old-format
+// keys (`erd-pos-...` / `erd-zoom-...` without a colon — orphans from
+// a prior storage scheme that wasn't bundle-scoped).
+(function erdStorageSweep() {
+  try {
+    const toDelete = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      const isLegacy = (k.startsWith('erd-pos-') || k.startsWith('erd-zoom-')) && !k.includes(':');
+      if (isLegacy) { toDelete.push(k); continue; }
+      if (k.startsWith('erd-pos:') || k.startsWith('erd-zoom:')) {
+        if (erdStorageRead(k) === null) toDelete.push(k);
+      }
+    }
+    toDelete.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+    if (toDelete.length) console.info(`[er-bundle] swept ${toDelete.length} stale localStorage entries`);
+  } catch (e) {}
+})();
+function erdStorageClearAll() {
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('erd-pos') || k.startsWith('erd-zoom'))) keys.push(k);
+    }
+    keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+    return keys.length;
+  } catch (e) { return 0; }
+}
 const CARD_W = BUNDLE.constants?.cardW ?? 214;
 const CARD_H_APPROX = BUNDLE.constants?.cardHApprox ?? 172;
 const LAYERS = BUNDLE.layers;
@@ -148,19 +201,88 @@ function ls(layer) {
   return LAYERS[first];
 }
 
-function getEndpoints(fromPos, toPos) {
+// Approximate a card's actual rendered height from its column count, so cy
+// can be treated as the visual center (avoids the "arrow ends below the
+// card" bug when CARD_H_APPROX overestimates short tables).
+// CSS reference: header ~28px, cols container ~6px, each visible col ~17px,
+// "+N more" row ~18px. Visible cap is 6 cols.
+function approxCardHeight(name) {
+  const t = TABLES[name];
+  if (!t || !t.cols) return CARD_H_APPROX;
+  const visible = Math.min(t.cols.length, 6);
+  const more = t.cols.length > visible ? 1 : 0;
+  return 28 + 6 + visible * 17 + more * 18;
+}
+
+function getEndpoints(fromName, toName, fromPos, toPos, slotInfo) {
+  // Distribute multiple connections sharing the same edge: instead of all
+  // arriving at the edge midpoint, spread them across the central 60% of
+  // the edge based on their slot index among siblings.
+  const spread = (center, length, slot) => {
+    if (!slot || slot.total <= 1) return center;
+    const span = length * 0.6;
+    const step = span / (slot.total + 1);
+    return center - span / 2 + step * (slot.idx + 1);
+  };
   const { cx: x1, cy: y1 } = fromPos, { cx: x2, cy: y2 } = toPos;
   const dx = x2 - x1, dy = y2 - y1;
-  const hw = CARD_W / 2, hh = CARD_H_APPROX / 2;
-  let sx, sy, ex, ey;
+  const hw = CARD_W / 2;
+  const fromH = approxCardHeight(fromName), toH = approxCardHeight(toName);
+  // Compute edge endpoints in data-direction terms: fp* on the from-card
+  // edge, tp* on the to-card edge.
+  let fpx, fpy, tpx, tpy;
   if (Math.abs(dy) >= Math.abs(dx)) {
-    sx = x1; sy = dy > 0 ? y1 + hh : y1 - hh;
-    ex = x2; ey = dy > 0 ? y2 - hh : y2 + hh;
+    fpx = spread(x1, CARD_W, slotInfo && slotInfo.dep);
+    fpy = dy > 0 ? y1 + fromH / 2 : y1 - fromH / 2;
+    tpx = spread(x2, CARD_W, slotInfo && slotInfo.arr);
+    tpy = dy > 0 ? y2 - toH / 2 : y2 + toH / 2;
   } else {
-    sx = dx > 0 ? x1 + hw : x1 - hw; sy = y1;
-    ex = dx > 0 ? x2 - hw : x2 + hw; ey = y2;
+    fpx = dx > 0 ? x1 + hw : x1 - hw;
+    fpy = spread(y1, fromH, slotInfo && slotInfo.dep);
+    tpx = dx > 0 ? x2 - hw : x2 + hw;
+    tpy = spread(y2, toH, slotInfo && slotInfo.arr);
   }
-  return { sx, sy, ex, ey };
+  // dbdiagram / UML convention: arrow tip at the PK side (= `from` in our
+  // bundle, since `to` is where the FK column lives). The SVG marker is
+  // attached at the path END, so we draw the path FK → PK: start at the
+  // to-card edge, end at the from-card edge.
+  return { sx: tpx, sy: tpy, ex: fpx, ey: fpy };
+}
+
+// For each connection compute its slot (idx within siblings + total count)
+// at both its departure and arrival edges. Self-refs are excluded (handled
+// separately by selfLoopPath).
+function computeEndpointSlots(connections, positions) {
+  const departures = {}, arrivals = {};
+  const sided = connections.map((c, i) => {
+    if (c.from === c.to) return null;
+    const fp = positions[c.from], tp = positions[c.to];
+    if (!fp || !tp) return null;
+    const dx = tp.cx - fp.cx, dy = tp.cy - fp.cy;
+    let depSide, arrSide;
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      depSide = dy > 0 ? 'bottom' : 'top';
+      arrSide = dy > 0 ? 'top' : 'bottom';
+    } else {
+      depSide = dx > 0 ? 'right' : 'left';
+      arrSide = dx > 0 ? 'left' : 'right';
+    }
+    return { i, depKey: `${c.from}:${depSide}`, arrKey: `${c.to}:${arrSide}` };
+  });
+  sided.forEach(s => {
+    if (!s) return;
+    (departures[s.depKey] = departures[s.depKey] || []).push(s.i);
+    (arrivals[s.arrKey] = arrivals[s.arrKey] || []).push(s.i);
+  });
+  const slots = new Array(connections.length).fill(null);
+  sided.forEach(s => {
+    if (!s) return;
+    slots[s.i] = {
+      dep: { idx: departures[s.depKey].indexOf(s.i), total: departures[s.depKey].length },
+      arr: { idx: arrivals[s.arrKey].indexOf(s.i), total: arrivals[s.arrKey].length },
+    };
+  });
+  return slots;
 }
 
 function connPath(sx, sy, ex, ey) {
@@ -180,7 +302,7 @@ function TableCard({ name, pos, onPointerDown, draggingName, padX = 20, padY = 2
   const visible = tbl.cols.slice(0, 6);
   const more = tbl.cols.length - visible.length;
   const left = pos.cx - CARD_W / 2 + padX;
-  const top = pos.cy - CARD_H_APPROX / 2 + padY;
+  const top = pos.cy - approxCardHeight(name) / 2 + padY;
   const dragging = draggingName === name;
   return (
     <div className={`tc${dragging ? ' is-dragging-card' : ''}`}
@@ -210,23 +332,18 @@ const ERD_ZOOM_MIN = 0.35;
 const ERD_ZOOM_MAX = 2.8;
 
 function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }) {
-  const storageKey = `erd-pos-${diagId}`;
-  const zoomKey = `erd-zoom-${diagId}`;
+  // Scope localStorage by bundle title to avoid cross-bundle collisions
+  // when many bundles use the same diagram id (e.g. "full").
+  const bundleScope = encodeURIComponent((BUNDLE.meta && BUNDLE.meta.title) || 'untitled');
+  const storageKey = `erd-pos:${bundleScope}:${diagId}`;
+  const zoomKey = `erd-zoom:${bundleScope}:${diagId}`;
   const [positions, setPositions] = useState(() => {
-    try {
-      const s = localStorage.getItem(storageKey);
-      if (s) return { ...initPos, ...JSON.parse(s) };
-    } catch (e) {}
-    return initPos;
+    const stored = erdStorageRead(storageKey);
+    return stored ? { ...initPos, ...stored } : initPos;
   });
   const [zoom, setZoom] = useState(() => {
-    try {
-      const s = localStorage.getItem(zoomKey);
-      if (s) {
-        const z = parseFloat(s);
-        if (Number.isFinite(z) && z >= ERD_ZOOM_MIN && z <= ERD_ZOOM_MAX) return z;
-      }
-    } catch (e) {}
+    const z = erdStorageRead(zoomKey);
+    if (Number.isFinite(z) && z >= ERD_ZOOM_MIN && z <= ERD_ZOOM_MAX) return z;
     return 1;
   });
   const [draggingName, setDraggingName] = useState(null);
@@ -238,7 +355,7 @@ function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }
   useEffect(() => { selectRef.current = onSelect; });
 
   useEffect(() => {
-    try { localStorage.setItem(zoomKey, String(zoom)); } catch (e) {}
+    erdStorageWrite(zoomKey, zoom);
   }, [zoom, zoomKey]);
 
   useEffect(() => {
@@ -298,7 +415,7 @@ function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }
           selectRef.current(d.name);
         } else {
           setPositions(prev => {
-            try { localStorage.setItem(storageKey, JSON.stringify(prev)); } catch (e) {}
+            erdStorageWrite(storageKey, prev);
             return prev;
           });
         }
@@ -358,13 +475,31 @@ function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }
     l === 'identity' ? 'blue' : l === 'compliance' ? 'amber' : l === 'contract' ? 'orange'
       : l === 'approval' ? 'pink' : l === 'product' ? 'green' : l === 'audit' ? 'purple' : 'gray';
 
+  // Self-reference loop: both endpoints on the RIGHT edge of the card,
+  // tip at the upper end (PK side) — consistent with the global
+  // dbdiagram / UML convention that all arrows point from FK to PK.
+  const selfLoopPath = (pos, name) => {
+    const cx = pos.cx + padX, cy = pos.cy + padY;
+    const hw = CARD_W / 2, hh = approxCardHeight(name) / 2;
+    const x = cx + hw;
+    const sy = cy + hh * 0.35;        // lower right (tail = FK side)
+    const ey = cy - hh * 0.35;        // upper right (tip = PK side)
+    const outX = x + 55;
+    return `M${x},${sy} C${outX},${sy} ${outX},${ey} ${x},${ey}`;
+  };
+
+  const slots = computeEndpointSlots(connections, positions);
   const paths = connections.map((c, i) => {
     const fp = positions[c.from], tp = positions[c.to];
     if (!fp || !tp) return null;
-    const { sx, sy, ex, ey } = getEndpoints(fp, tp);
     const fromLayer = TABLES[c.from]?.layer || Object.keys(LAYERS)[0];
     const color = c.isNew ? ls(fromLayer).color : 'rgba(255,255,255,.82)';
-    const d = connPath(sx + padX, sy + padY, ex + padX, ey + padY);
+    const d = (c.from === c.to)
+      ? selfLoopPath(fp, c.from)
+      : (() => {
+          const { sx, sy, ex, ey } = getEndpoints(c.from, c.to, fp, tp, slots[i]);
+          return connPath(sx + padX, sy + padY, ex + padX, ey + padY);
+        })();
     return { ...c, d, color, i, fromLayer, strokeW: c.isNew ? 1.5 : 1, opacity: c.isNew ? 0.85 : 0.72, dash: c.dashed ? '5,4' : 'none' };
   }).filter(Boolean);
 
@@ -381,8 +516,8 @@ function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }
           <svg className="erd-svg" width={svgW} height={svgH}>
             <defs>
               {Object.entries(COLS).map(([k, fill]) => (
-                <marker key={k} id={`${diagId}-${k}`} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                  <path d="M0,0 L0,6 L6,3 z" fill={fill} opacity=".85"/>
+                <marker key={k} id={`${diagId}-${k}`} markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                  <path d="M0,0 L0,10 L10,5 z" fill={fill} opacity=".9"/>
                 </marker>
               ))}
             </defs>
@@ -410,6 +545,12 @@ function ERDiagram({ diagId, positions: initPos, connections, canvas, onSelect }
         <span className="erd-zoom-tip">Ctrl/⌘+滾輪 · 空白拖曳平移</span>
       </div>
       <button type="button" className="erd-reset-btn" onClick={reset}>↺ 重設版面</button>
+      <button type="button" className="erd-clear-btn" title="Clear all stored ER positions across all bundles" onClick={() => {
+        if (!confirm('清掉所有 ER 圖的座標與縮放記憶?(所有 bundle,不只目前這份)')) return;
+        const n = erdStorageClearAll();
+        alert(`已清除 ${n} 個 localStorage entry`);
+        location.reload();
+      }}>🗑 清全部</button>
       {tip && <div className="conn-tip" style={{ left: tip.x + 12, top: tip.y - 12 }}>{tip.label}</div>}
     </div>
   );

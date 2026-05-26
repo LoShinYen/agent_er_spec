@@ -30,6 +30,13 @@ Read the root files directly and produce bundles by hand or via an agent:
 
 **By default the skill produces both the `.erd.json` and an interactive HTML preview** (opens automatically). Tell it "JSON only" if you want to skip the preview. The [Quick start](#quick-start) CLI commands below are only needed when working with bundles outside Claude Code, or re-rendering after a manual edit.
 
+**Interactive page UX**:
+
+- Arrow tips point at PK / referenced side (dbdiagram / UML convention) — read arrow tail → tip as "this column references that column".
+- Self-references draw as a same-side loop on the right edge of the card.
+- Multiple FKs landing on the same edge are spread out so the arrowheads don't overlap.
+- Card positions you drag are saved to `localStorage` scoped per bundle (no cross-bundle collisions), expire after 30 days. **↺ 重設版面** restores the current diagram; **🗑 清全部** wipes every bundle's saved positions.
+
 **Install (pick one):**
 
 - **Plugin marketplace** — add `.claude-plugin/marketplace.json` to your Claude Code plugin marketplace.
