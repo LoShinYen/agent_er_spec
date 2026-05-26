@@ -1,0 +1,8 @@
+{
+  "name": "er-bundle",
+  "description": "Turn SQL DDL or design Markdown into a long-lived ER design bundle (.erd.json) that drives an interactive web page. Preserves color-coded layers, multi-view diagrams, data flows, and design-decision logs that Mermaid can't express.",
+  "version": "0.1.0",
+  "author": {
+    "name": "LoShinYen"
+  }
+}
