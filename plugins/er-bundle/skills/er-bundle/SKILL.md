@@ -1,6 +1,6 @@
 ---
 name: er-bundle
-description: "Use this skill when the user wants to turn SQL DDL or design Markdown into a long-lived ER design bundle (.erd.json) that drives an interactive web page — not a one-shot Mermaid snippet. Trigger when the request mentions an ER / entity-relationship diagram together with color-coded layers / sub-domains, multiple diagram views of the same schema, a write-flow / data-flow narrative, or an old-vs-new design decision log. Also trigger when the user asks to update an existing .erd.json or anything matching erd-bundle.schema.json. Do NOT trigger for pure 'draw a quick ER diagram' requests — Mermaid erDiagram is faster for that."
+description: "Use this skill when the user wants to turn SQL DDL or design Markdown into a long-lived ER design bundle (.erd.json) that drives an interactive web page — not a one-shot Mermaid snippet. Trigger when the request mentions an ER / entity-relationship diagram together with color-coded layers / sub-domains, multiple diagram views of the same schema, a write-flow / data-flow narrative, or an old-vs-new design decision log. Also trigger when the user asks to update an existing .erd.json, to render / preview / view an existing bundle as HTML, or anything matching erd-bundle.schema.json. Do NOT trigger for pure 'draw a quick ER diagram' requests — Mermaid erDiagram is faster for that."
 ---
 
 # er-bundle — ER design bundle workflow
@@ -9,7 +9,7 @@ description: "Use this skill when the user wants to turn SQL DDL or design Markd
 
 **Primary output**: a JSON file conforming to `references/schema.json` (conventional extension `.erd.json`).
 
-**Optional output** (only when the user asks for it): inject the bundle into a host HTML page to produce an interactive viewer. A minimal reference template lives at `examples/demo.html`; in a host project it sits outside this skill — the user provides the path.
+**Secondary output** (produce by default unless the user explicitly only wants the JSON): inject the bundle into the bundled `examples/demo.html` template to produce a standalone interactive HTML viewer. Run `scripts/render_html.py` and open the result — the user should not have to drop to a terminal for this step.
 
 ## Why a bundle instead of Mermaid
 
@@ -45,6 +45,11 @@ description: "Use this skill when the user wants to turn SQL DDL or design Markd
 5. **Coordinates**: see `references/layout-heuristics.md`.
 6. **(Optional)** Fill in `dataFlows` (write paths, actor → action) and `designDecisions` (old vs. v3). Reference: `examples/ecommerce.erd.json`.
 7. **Validate**: `python3 scripts/validate.py <your-bundle>.json`. **Mandatory** — do not deliver if it fails.
+8. **Render preview** (proactive, no terminal for the user): once the bundle validates, **render an HTML preview and open it** unless the user has explicitly said they only want the JSON. Run:
+   ```bash
+   python3 <skill-path>/scripts/render_html.py <bundle.json> -o /tmp/<bundle-stem>.html && open /tmp/<bundle-stem>.html
+   ```
+   If the user later says they want to re-render (e.g. after editing the JSON manually), do the same — they should never need to drop to a terminal for this.
 
 ## Anti-patterns (common mistakes)
 
